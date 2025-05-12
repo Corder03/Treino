@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Plano de Treino Semanal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#3B82F6',
+                            dark: '#60A5FA'
+                        },
+                        secondary: {
+                            light: '#10B981',
+                            dark: '#34D399'
+                        },
+                        dark: {
+                            light: '#1F2937',
+                            dark: '#111827'
+                        },
+                        light: {
+                            light: '#F3F4F6',
+                            dark: '#E5E7EB'
+                        },
+                        card: {
+                            light: '#FFFFFF',
+                            dark: '#1E293B'
+                        },
+                        background: {
+                            light: '#F9FAFB',
+                            dark: '#0F172A'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .completed {
+            position: relative;
+        }
+        .completed::after {
+            content: "✓";
+            color: #10B981;
+            font-weight: bold;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .dark .completed::after {
+            color: #34D399;
+        }
+        .exercise-item {
+            transition: all 0.2s ease;
+        }
+        .exercise-item:hover {
+            transform: translateX(2px);
+        }
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .day-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .day-card:hover {
+            transform: translateY(-5px);
+        }
+        .circumference {
+            stroke-dasharray: 100, 100;
+            stroke-dashoffset: 0;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header with Dark Mode Toggle -->
+        <header class="text-center mb-12 relative">
+            <div class="absolute top-0 right-0">
+                <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+            
+            <div class="flex flex-col items-center">
+                <div class="w-24 h-24 mb-4 rounded-full bg-primary-light dark:bg-primary-dark flex items-center justify-center shadow-lg">
+                    <i class="fas fa-dumbbell text-3xl text-white"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-dark-light dark:text-light-dark mb-2">Meu Plano de Treino</h1>
+                <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">Programa semanal de exercícios em casa para fortalecimento muscular e core</p>
+                
+                <div class="mt-6 p-4 bg-primary-light/10 dark:bg-primary-dark/20 rounded-lg inline-block border border-primary-light/20 dark:border-primary-dark/30">
+                    <p id="current-day" class="text-xl font-semibold text-primary-light dark:text-primary-dark"></p>
+                    <p id="current-date" class="text-gray-600 dark:text-gray-300 text-sm"></p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Weekly Progress -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-md p-6 mb-8 border border-gray-100 dark:border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-dark-light dark:text-light-dark">Progresso Semanal</h2>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    <span id="weekly-completion">0%</span> completo
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-2 text-center mb-4">
+                <div class="day-progress" data-day="domingo">
+                    <div class="h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex flex-col items-center justify-center text-xs font-medium">
+                        <span>D</span>
+                        <span class="text-[0.6rem] opacity-70">Dom</span>
+                    </div>
+                    <div class="relative w-12 h-12 mx-auto mt-2">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 dark:text-gray-700" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="progress-ring text-gray-500 dark:text-gray-400 circumference" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            <span class="day-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-progress" data-day="segunda">
+                    <div class="h-10 rounded-lg bg-primary-light/20 dark:bg-primary-dark/20 flex flex-col items-center justify-center text-xs font-medium">
+                        <span>S</span>
+                        <span class="text-[0.6rem] opacity-70">Seg</span>
+                    </div>
+                    <div class="relative w-12 h-12 mx-auto mt-2">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 dark:text-gray-700" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="progress-ring text-primary-light dark:text-primary-dark circumference" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            <span class="day-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-progress" data-day="terca">
+                    <div class="h-10 rounded-lg bg-secondary-light/20 dark:bg-secondary-dark/20 flex flex-col items-center justify-center text-xs font-medium">
+                        <span>T</span>
+                        <span class="text-[0.6rem] opacity-70">Ter</span>
+                    </div>
+                    <div class="relative w-12 h-12 mx-auto mt-2">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 dark:text-gray-700" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="progress-ring text-secondary-light dark:text-secondary-dark circumference" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            <span class="day-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-progress" data-day="quarta">
+                    <div class="h-10 rounded-lg bg-purple-200 dark:bg-purple-800/30 flex flex-col items-center justify-center text-xs font-medium">
+                        <span>Q</span>
+                        <span class="text-[0.6rem] opacity-70">Qua</span>
+                    </div>
+                    <div class="relative w-12 h-12 mx-auto mt-2">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 dark:text-gray-700" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="progress-ring text-purple-500 dark:text-purple-400 circumference" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            <span class="day-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-progress" data-day="quinta">
+                    <div class="h-10 rounded-lg bg-yellow-200 dark:bg-yellow-800/30 flex flex-col items-center justify-center text-xs font-medium">
+                        <span>Q</span>
+                        <span class="text-[0.6rem] opacity-70">Qui</span>
+                    </div>
+                    <div class="relative w-12 h-12 mx-auto mt-2">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 dark:text-gray-700" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="progress-ring text-yellow-500 dark:text-yellow-400 circumference" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            <span class="day-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-progress" data-day="sexta">
+                    <div class="h-10 rounded-lg bg-red-200 dark:bg-red-800/30 flex flex-col items-center justify-center text-xs font-medium">
+                        <span>S</span>
+                        <span class="text-[0.6rem] opacity-70">Sex</span>
+                    </div>
+                    <div class="relative w-12 h-12 mx-auto mt-2">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 dark:text-gray-700" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="progress-ring text-red-500 dark:text-red-400 circumference" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            <span class="day-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-progress" data-day="sabado">
+                    <div class="h-10 rounded-lg bg-pink-200 dark:bg-pink-800/30 flex flex-col items-center justify-center text-xs font-medium">
+                        <span>S</span>
+                        <span class="text-[0.6rem] opacity-70">Sáb</span>
+                    </div>
+                    <div class="relative w-12 h-12 mx-auto mt-2">
+                        <svg class="w-full h-full" viewBox="0 0 36 36">
+                            <path class="text-gray-200 dark:text-gray-700" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="progress-ring text-pink-500 dark:text-pink-400 circumference" 
+                                  d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none" stroke="currentColor" stroke-width="3"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            <span class="day-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mt-4">
+                <div id="weekly-progress-bar" class="bg-primary-light dark:bg-primary-dark h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Workout Days Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Segunda -->
+            <div class="day-card bg-card-light dark:bg-card-dark rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-primary-light dark:bg-primary-dark text-white p-4 flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">SEGUNDA</h2>
+                        <p class="text-sm opacity-90">Peito, Tríceps e Core</p>
+                    </div>
+                </div>
+                <div class="p-4 workout-day" data-day="segunda">
+                    <ul class="space-y-3">
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Flexões tradicionais – 4x até a falha">Flexões tradicionais – 4x até a falha</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Flexões com pés elevados – 3x10-15">Flexões com pés elevados – 3x10-15</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Flexões diamante – 3x10-12">Flexões diamante – 3x10-12</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Prancha – 3x40 segundos">Prancha – 3x40 segundos</li>
+                        <li class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-700 font-medium text-sm text-gray-500 dark:text-gray-400">Abdômen:</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Elevação de pernas – 3x15">Elevação de pernas – 3x15</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Abdominal curto – 3x20">Abdominal curto – 3x20</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Terça -->
+            <div class="day-card bg-card-light dark:bg-card-dark rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-secondary-light dark:bg-secondary-dark text-white p-4 flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-walking"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">TERÇA</h2>
+                        <p class="text-sm opacity-90">Pernas, Glúteos e Core</p>
+                    </div>
+                </div>
+                <div class="p-4 workout-day" data-day="terca">
+                    <ul class="space-y-3">
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Agachamento livre – 4x20">Agachamento livre – 4x20</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Avanço (passada) – 3x12 por perna">Avanço (passada) – 3x12 por perna</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Agachamento com salto – 3x10">Agachamento com salto – 3x10</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Elevação pélvica no chão – 3x20">Elevação pélvica no chão – 3x20</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Isometria na parede – 3x30-45s">Isometria na parede – 3x30-45s</li>
+                        <li class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-700 font-medium text-sm text-gray-500 dark:text-gray-400">Abdômen:</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Bicicleta no ar – 3x30 segundos">Bicicleta no ar – 3x30 segundos</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Prancha lateral – 2x30s por lado">Prancha lateral – 2x30s por lado</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quarta -->
+            <div class="day-card bg-card-light dark:bg-card-dark rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-purple-500 dark:bg-purple-600 text-white p-4 flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-walking"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">QUARTA</h2>
+                        <p class="text-sm opacity-90">Caminhada ou Descanso Ativo</p>
+                    </div>
+                </div>
+                <div class="p-4 workout-day" data-day="quarta">
+                    <div class="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg mb-4 border border-purple-100 dark:border-purple-800">
+                        <p class="text-purple-800 dark:text-purple-200 text-sm"><i class="fas fa-info-circle mr-2"></i> Caminhada rápida de 30–45 minutos, alongamentos ou mobilidade.</p>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Caminhada rápida – 30-45 minutos">Caminhada rápida – 30-45 minutos</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Alongamentos – 10-15 minutos">Alongamentos – 10-15 minutos</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quinta -->
+            <div class="day-card bg-card-light dark:bg-card-dark rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-yellow-500 dark:bg-yellow-600 text-white p-4 flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">QUINTA</h2>
+                        <p class="text-sm opacity-90">Costas, Bíceps e Core</p>
+                    </div>
+                </div>
+                <div class="p-4 workout-day" data-day="quinta">
+                    <ul class="space-y-3">
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Australian pull-ups (em barra baixa ou mesa) – 3x10-12">Australian pull-ups (em barra baixa ou mesa) – 3x10-12</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Flexão invertida (puxando sob a mesa) – 3x10">Flexão invertida (puxando sob a mesa) – 3x10</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Bíceps com toalha (resistência) – 3x15">Bíceps com toalha (resistência) – 3x15</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Superman – 3x15">Superman – 3x15</li>
+                        <li class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-700 font-medium text-sm text-gray-500 dark:text-gray-400">Abdômen:</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Prancha com toques nos ombros – 3x20">Prancha com toques nos ombros – 3x20</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Elevação de pernas – 3x15">Elevação de pernas – 3x15</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sexta -->
+            <div class="day-card bg-card-light dark:bg-card-dark rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-red-500 dark:bg-red-600 text-white p-4 flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">SEXTA</h2>
+                        <p class="text-sm opacity-90">Corpo Inteiro (HIIT + Core)</p>
+                    </div>
+                </div>
+                <div class="p-4 workout-day" data-day="sexta">
+                    <div class="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg mb-4 border border-red-100 dark:border-red-800">
+                        <p class="text-red-800 dark:text-red-200 text-sm font-medium"><i class="fas fa-sync-alt mr-2"></i>Circuito 3x (descanso 1 min entre rounds):</p>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Burpees – 10-12">Burpees – 10-12</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Agachamento com salto – 15">Agachamento com salto – 15</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Flexões – 10-15">Flexões – 10-15</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Corrida estacionária com joelho alto – 30s">Corrida estacionária com joelho alto – 30s</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Prancha – 30s">Prancha – 30s</li>
+                        <li class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-700 font-medium text-sm text-gray-500 dark:text-gray-400">Finalização de abdômen:</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Bicicleta no ar – 3x30s">Bicicleta no ar – 3x30s</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Abdominal canivete (V-up) – 3x12">Abdominal canivete (V-up) – 3x12</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Sábado -->
+            <div class="day-card bg-card-light dark:bg-card-dark rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-pink-500 dark:bg-pink-600 text-white p-4 flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-fire-alt"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">SÁBADO</h2>
+                        <p class="text-sm opacity-90">Abdômen e Core Intensivo</p>
+                    </div>
+                </div>
+                <div class="p-4 workout-day" data-day="sabado">
+                    <ul class="space-y-3">
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Elevação de pernas – 3x15">Elevação de pernas – 3x15</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Bicicleta no ar – 3x30s">Bicicleta no ar – 3x30s</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Prancha – 3x1 min">Prancha – 3x1 min</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Prancha com toque no ombro – 3x20">Prancha com toque no ombro – 3x20</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Canivete (V-up) – 3x12">Canivete (V-up) – 3x12</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Abdominal curto – 3x20">Abdominal curto – 3x20</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Domingo -->
+            <div class="day-card bg-card-light dark:bg-card-dark rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-gray-500 dark:bg-gray-600 text-white p-4 flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">DOMINGO</h2>
+                        <p class="text-sm opacity-90">Descanso Total</p>
+                    </div>
+                </div>
+                <div class="p-4 workout-day" data-day="domingo">
+                    <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center border border-gray-200 dark:border-gray-700">
+                        <i class="fas fa-bed text-4xl text-gray-500 dark:text-gray-400 mb-3"></i>
+                        <p class="text-gray-700 dark:text-gray-300 text-sm"><span class="font-medium">Recuperação e sono profundo</span> são cruciais para o pico de testosterona.</p>
+                    </div>
+                    <ul class="space-y-3 mt-4">
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Descanso completo">Descanso completo</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Hidratação adequada">Hidratação adequada</li>
+                        <li class="exercise-item p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-exercise="Alongamentos leves (opcional)">Alongamentos leves (opcional)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Workout -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-md p-6 mb-8 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-dark-light dark:text-light-dark flex items-center">
+                    <i class="fas fa-calendar-day mr-2 text-primary-light dark:text-primary-dark"></i>
+                    Seu Treino Hoje
+                </h2>
+                <div id="today-completion" class="text-sm font-medium px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200">
+                    0% completo
+                </div>
+            </div>
+            <div id="today-exercises" class="space-y-3">
+                <!-- Today's exercises will
+                                 <!-- Today's exercises will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Weekly Summary -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
+            <h2 class="text-xl font-bold text-dark-light dark:text-light-dark mb-4 flex items-center">
+                <i class="fas fa-chart-line mr-2 text-primary-light dark:text-primary-dark"></i>
+                Resumo Semanal
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Exercícios Completados</h3>
+                    <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Esta semana</span>
+                            <span id="completed-count" class="font-bold">0</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Total</span>
+                            <span id="total-count" class="font-bold">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Destaques</h3>
+                    <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+                        <div id="highlights" class="space-y-2">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Complete exercícios para ver seus destaques</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date
+            const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const today = new Date();
+            const dayName = days[today.getDay()];
+            const dateStr = `${today.getDate()} de ${months[today.getMonth()]} de ${today.getFullYear()}`;
+            
+            document.getElementById('current-day').textContent = dayName;
+            document.getElementById('current-date').textContent = dateStr;
+            
+            // Set up dark mode toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const storedTheme = localStorage.getItem('theme');
+            
+            if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+            
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            });
+            
+            // Highlight current day
+            const currentDay = dayName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+            const currentDayElement = document.querySelector(`.day-progress[data-day="${currentDay}"]`);
+            if (currentDayElement) {
+                currentDayElement.classList.add('ring-2', 'ring-primary-light', 'dark:ring-primary-dark', 'ring-offset-2', 'rounded-lg');
+            }
+            
+            // Initialize completed exercises object if not exists
+            if (!localStorage.getItem('completedExercises')) {
+                localStorage.setItem('completedExercises', JSON.stringify({}));
+            }
+            
+            // Load completed exercises from localStorage
+            loadCompletedExercises();
+            
+            // Set up exercise click handlers
+            document.querySelectorAll('[data-exercise]').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.classList.toggle('completed');
+                    
+                    const exercise = this.getAttribute('data-exercise');
+                    const day = this.closest('.workout-day').getAttribute('data-day');
+                    saveCompletedExercise(day, exercise, this.classList.contains('completed'));
+                    
+                    // Update all progress indicators
+                    updateDayProgress(day);
+                    updateWeeklyProgress();
+                    updateTodayCompletion();
+                    updateSummary();
+                });
+            });
+            
+            // Show today's exercises
+            showTodaysExercises(currentDay);
+            updateWeeklyProgress();
+            updateSummary();
+            
+            // Initialize progress rings
+            initializeProgressRings();
+        });
+        
+        function initializeProgressRings() {
+            const days = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            days.forEach(day => {
+                updateDayProgress(day);
+            });
+        }
+        
+        function saveCompletedExercise(day, exercise, isCompleted) {
+            let completed = JSON.parse(localStorage.getItem('completedExercises'));
+            
+            if (!completed[day]) {
+                completed[day] = [];
+            }
+            
+            if (isCompleted) {
+                if (!completed[day].includes(exercise)) {
+                    completed[day].push(exercise);
+                }
+            } else {
+                completed[day] = completed[day].filter(e => e !== exercise);
+            }
+            
+            localStorage.setItem('completedExercises', JSON.stringify(completed));
+        }
+        
+        function loadCompletedExercises() {
+            const completed = JSON.parse(localStorage.getItem('completedExercises'));
+            
+            for (const day in completed) {
+                if (completed.hasOwnProperty(day)) {
+                    completed[day].forEach(exercise => {
+                        const element = document.querySelector(`.workout-day[data-day="${day}"] li[data-exercise="${exercise}"]`);
+                        if (element) {
+                            element.classList.add('completed');
+                        }
+                    });
+                }
+            }
+        }
+        
+        function updateDayProgress(day) {
+            const dayElement = document.querySelector(`.workout-day[data-day="${day}"]`);
+            if (!dayElement) return;
+            
+            const totalExercises = dayElement.querySelectorAll('[data-exercise]').length;
+            const completedExercises = dayElement.querySelectorAll('[data-exercise].completed').length;
+            const progress = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
+            
+            // Update progress ring
+            const progressRing = document.querySelector(`.day-progress[data-day="${day}"] .progress-ring`);
+            if (progressRing) {
+                const circumference = 2 * Math.PI * 15.9155;
+                const offset = circumference - (progress / 100) * circumference;
+                progressRing.style.strokeDashoffset = offset;
+                
+                // Update percentage text
+                const percentageElement = document.querySelector(`.day-progress[data-day="${day}"] .day-percentage`);
+                if (percentageElement) {
+                    percentageElement.textContent = `${progress}%`;
+                }
+            }
+            
+            return { completed: completedExercises, total: totalExercises };
+        }
+        
+        function updateWeeklyProgress() {
+            const days = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            let totalCompleted = 0;
+            let totalExercises = 0;
+            
+            days.forEach(day => {
+                const progress = updateDayProgress(day);
+                if (progress) {
+                    totalCompleted += progress.completed;
+                    totalExercises += progress.total;
+                }
+            });
+            
+            // Add domingo (rest day) with 0 exercises
+            updateDayProgress('domingo');
+            
+            const weeklyProgress = totalExercises > 0 ? Math.round((totalCompleted / totalExercises) * 100) : 0;
+            document.getElementById('weekly-progress-bar').style.width = `${weeklyProgress}%`;
+            document.getElementById('weekly-completion').textContent = `${weeklyProgress}%`;
+        }
+        
+        function showTodaysExercises(day) {
+            const todayContainer = document.getElementById('today-exercises');
+            const dayElement = document.querySelector(`.workout-day[data-day="${day}"]`);
+            
+            if (!dayElement) {
+                todayContainer.innerHTML = `
+                    <div class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center border border-gray-200 dark:border-gray-700">
+                        <i class="fas fa-bed text-3xl text-gray-400 dark:text-gray-500 mb-3"></i>
+                        <p class="text-gray-700 dark:text-gray-300">Hoje é dia de descanso! Aproveite para recuperar suas energias.</p>
+                    </div>
+                `;
+                updateTodayCompletion();
+                return;
+            }
+            
+            const exercises = dayElement.querySelectorAll('[data-exercise]');
+            if (exercises.length === 0) return;
+            
+            let html = '<ul class="space-y-3">';
+            
+            exercises.forEach(exercise => {
+                const isCompleted = exercise.classList.contains('completed');
+                const exerciseText = exercise.getAttribute('data-exercise');
+                html += `
+                    <li class="flex items-center p-3 rounded-lg ${isCompleted ? 'bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/50' : 'bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700'} transition-colors">
+                        <span class="flex-grow ${isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : ''}">${exerciseText}</span>
+                        <button class="ml-2 p-1 rounded-full ${isCompleted ? 'text-green-500 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}" 
+                                onclick="toggleExerciseCompletion(this, '${day}', '${exerciseText.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-${isCompleted ? 'check-circle' : 'circle'}"></i>
+                        </button>
+                    </li>
+                `;
+            });
+            
+            html += '</ul>';
+            todayContainer.innerHTML = html;
+            updateTodayCompletion();
+        }
+        
+        function toggleExerciseCompletion(button, day, exercise) {
+            const listItem = button.closest('li');
+            const isCompleted = !listItem.classList.contains('bg-green-50');
+            
+            // Update UI
+            listItem.classList.toggle('bg-green-50', isCompleted);
+            listItem.classList.toggle('dark:bg-green-900/20', isCompleted);
+            listItem.classList.toggle('border-green-100', isCompleted);
+            listItem.classList.toggle('dark:border-green-800/50', isCompleted);
+            listItem.classList.toggle('bg-gray-50', !isCompleted);
+            listItem.classList.toggle('dark:bg-gray-800', !isCompleted);
+            listItem.querySelector('span').classList.toggle('line-through', isCompleted);
+            listItem.querySelector('span').classList.toggle('text-gray-500', isCompleted);
+            listItem.querySelector('span').classList.toggle('dark:text-gray-400', isCompleted);
+            button.classList.toggle('text-green-500', isCompleted);
+            button.classList.toggle('dark:text-green-400', isCompleted);
+            button.classList.toggle('text-gray-400', !isCompleted);
+            button.classList.toggle('dark:text-gray-500', !isCompleted);
+            
+            // Update icon
+            const icon = button.querySelector('i');
+            icon.classList.toggle('fa-check-circle', isCompleted);
+            icon.classList.toggle('fa-circle', !isCompleted);
+            
+            // Save to storage and update progress
+            saveCompletedExercise(day, exercise, isCompleted);
+            
+            // Also update the main exercise list
+            const mainExerciseItem = document.querySelector(`.workout-day[data-day="${day}"] li[data-exercise="${exercise}"]`);
+            if (mainExerciseItem) {
+                mainExerciseItem.classList.toggle('completed', isCompleted);
+            }
+            
+            updateDayProgress(day);
+            updateWeeklyProgress();
+            updateTodayCompletion();
+            updateSummary();
+        }
+        
+        function updateTodayCompletion() {
+            const todayContainer = document.getElementById('today-exercises');
+            const exercises = todayContainer.querySelectorAll('li');
+            if (exercises.length === 0) {
+                document.getElementById('today-completion').textContent = "Dia de descanso";
+                document.getElementById('today-completion').className = 'text-sm font-medium px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+                return;
+            }
+            
+            const completedExercises = Array.from(exercises).filter(li => 
+                li.classList.contains('bg-green-50') || li.classList.contains('dark:bg-green-900/20')
+            ).length;
+            
+            const totalExercises = exercises.length;
+            const progress = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
+            
+            const completionElement = document.getElementById('today-completion');
+            completionElement.textContent = `${progress}% completo`;
+            
+            // Update color based on progress
+            completionElement.className = 'text-sm font-medium px-3 py-1 rounded-full';
+            if (progress === 0) {
+                completionElement.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200');
+            } else if (progress < 50) {
+                completionElement.classList.add('bg-yellow-100', 'dark:bg-yellow-900/50', 'text-yellow-800', 'dark:text-yellow-200');
+            } else if (progress < 100) {
+                completionElement.classList.add('bg-blue-100', 'dark:bg-blue-900/50', 'text-blue-800', 'dark:text-blue-200');
+            } else {
+                completionElement.classList.add('bg-green-100', 'dark:bg-green-900/50', 'text-green-800', 'dark:text-green-200');
+            }
+        }
+        
+        function updateSummary() {
+            const completed = JSON.parse(localStorage.getItem('completedExercises'));
+            let totalCompleted = 0;
+            let allExercises = new Set();
+            
+            // Count all completed exercises
+            for (const day in completed) {
+                if (completed.hasOwnProperty(day)) {
+                    totalCompleted += completed[day].length;
+                }
+            }
+            
+            // Count all exercises
+            document.querySelectorAll('[data-exercise]').forEach(ex => {
+                allExercises.add(ex.getAttribute('data-exercise'));
+            });
+            
+            const totalExercises = allExercises.size;
+            
+            document.getElementById('completed-count').textContent = totalCompleted;
+            document.getElementById('total-count').textContent = totalExercises;
+            
+            // Update highlights
+            const highlightsContainer = document.getElementById('highlights');
+            highlightsContainer.innerHTML = '';
+            
+            if (totalCompleted === 0) {
+                highlightsContainer.innerHTML = '<p class="text-sm text-gray-600 dark:text-gray-400">Complete exercícios para ver seus destaques</p>';
+                return;
+            }
+            
+            // Find most completed day
+            let mostCompletedDay = { name: '', count: 0, total: 0 };
+            const days = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            
+            days.forEach(day => {
+                const dayElement = document.querySelector(`.workout-day[data-day="${day}"]`);
+                if (dayElement) {
+                    const total = dayElement.querySelectorAll('[data-exercise]').length;
+                    const completedCount = (completed[day] || []).length;
+                    
+                    if (completedCount > mostCompletedDay.count) {
+                        mostCompletedDay = { 
+                            name: day.charAt(0).toUpperCase() + day.slice(1),
+                            count: completedCount,
+                            total: total
+                        };
+                    }
+                }
+            });
+            
+            // Add highlights
+            if (mostCompletedDay.count > 0) {
+                const highlight = document.createElement('div');
+                highlight.className = 'flex items-center justify-between text-sm';
+                
+                const text = document.createElement('span');
+                text.className = 'text-gray-600 dark:text-gray-400';
+                text.textContent = 'Dia mais produtivo:';
+                
+                const value = document.createElement('span');
+                value.className = 'font-medium';
+                value.textContent = `${mostCompletedDay.name} (${mostCompletedDay.count}/${mostCompletedDay.total})`;
+                
+                highlight.appendChild(text);
+                highlight.appendChild(value);
+                highlightsContainer.appendChild(highlight);
+            }
+            
+            if (totalCompleted > 0) {
+                const highlight = document.createElement('div');
+                highlight.className = 'flex items-center justify-between text-sm';
+                
+                const text = document.createElement('span');
+                text.className = 'text-gray-600 dark:text-gray-400';
+                text.textContent = 'Total esta semana:';
+                
+                const value = document.createElement('span');
+                value.className = 'font-medium';
+                value.textContent = `${totalCompleted} exercícios`;
+                
+                highlight.appendChild(text);
+                highlight.appendChild(value);
+                highlightsContainer.appendChild(highlight);
+            }
+            
+            // Add encouragement message
+            const progress = (totalCompleted / totalExercises) * 100;
+            const encouragement = document.createElement('p');
+            encouragement.className = 'text-sm mt-2 text-center italic text-gray-500 dark:text-gray-400';
+            
+            if (progress < 30) {
+                encouragement.textContent = 'Você está começando! Continue assim!';
+            } else if (progress < 70) {
+                encouragement.textContent = 'Bom trabalho! Você está no caminho certo!';
+            } else if (progress < 100) {
+                encouragement.textContent = 'Incrível! Quase lá!';
+            } else {
+                encouragement.textContent = 'Perfeito! Semana completa! 👏';
+            }
+            
+            highlightsContainer.appendChild(encouragement);
+        }
+    </script>
+</body>
+</html>
