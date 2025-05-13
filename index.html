@@ -88,6 +88,12 @@
             stroke-dasharray: 100, 100;
             stroke-dashoffset: 0;
         }
+        .calendar-day {
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 min-h-screen transition-colors duration-300">
@@ -299,6 +305,34 @@
             </div>
         </div>
 
+        <!-- Calendar Section -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-md p-6 mb-8 border border-gray-100 dark:border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-dark-light dark:text-light-dark">Calendário de Treinos</h2>
+                <div class="flex items-center space-x-2">
+                    <button id="prev-month" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h3 id="current-month-year" class="font-medium"></h3>
+                    <button id="next-month" class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 py-2">Dom</div>
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 py-2">Seg</div>
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 py-2">Ter</div>
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 py-2">Qua</div>
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 py-2">Qui</div>
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 py-2">Sex</div>
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400 py-2">Sáb</div>
+            </div>
+            
+            <div id="calendar-days" class="grid grid-cols-7 gap-1"></div>
+        </div>
+
         <!-- Workout Days Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <!-- Segunda -->
@@ -484,8 +518,7 @@
                 </div>
             </div>
             <div id="today-exercises" class="space-y-3">
-                <!-- Today's exercises will
-                                 <!-- Today's exercises will be inserted here by JavaScript -->
+                <!-- Today's exercises will be inserted here by JavaScript -->
             </div>
         </div>
 
@@ -561,6 +594,11 @@
                 localStorage.setItem('completedExercises', JSON.stringify({}));
             }
             
+            // Initialize workout calendar if not exists
+            if (!localStorage.getItem('workoutCalendar')) {
+                localStorage.setItem('workoutCalendar', JSON.stringify({}));
+            }
+            
             // Load completed exercises from localStorage
             loadCompletedExercises();
             
@@ -578,6 +616,7 @@
                     updateWeeklyProgress();
                     updateTodayCompletion();
                     updateSummary();
+                    updateCalendar();
                 });
             });
             
@@ -588,6 +627,9 @@
             
             // Initialize progress rings
             initializeProgressRings();
+            
+            // Initialize calendar
+            initCalendar();
         });
         
         function initializeProgressRings() {
@@ -613,6 +655,9 @@
             }
             
             localStorage.setItem('completedExercises', JSON.stringify(completed));
+            
+            // Also update workout calendar
+            updateWorkoutCalendar(day);
         }
         
         function loadCompletedExercises() {
@@ -752,6 +797,7 @@
             updateWeeklyProgress();
             updateTodayCompletion();
             updateSummary();
+            updateCalendar();
         }
         
         function updateTodayCompletion() {
@@ -888,6 +934,131 @@
             }
             
             highlightsContainer.appendChild(encouragement);
+        }
+        
+        // Calendar functions
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        
+        function initCalendar() {
+            updateCalendar();
+            
+            // Set up month navigation
+            document.getElementById('prev-month').addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                updateCalendar();
+            });
+            
+            document.getElementById('next-month').addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                updateCalendar();
+            });
+        }
+        
+        function updateCalendar() {
+            const calendarDays = document.getElementById('calendar-days');
+            calendarDays.innerHTML = '';
+            
+            // Set month and year title
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            document.getElementById('current-month-year').textContent = 
+                `${monthNames[currentMonth]} ${currentYear}`;
+            
+            // Get first day of month and total days in month
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Get workout data from localStorage
+            const workoutCalendar = JSON.parse(localStorage.getItem('workoutCalendar')) || {};
+            
+            // Add empty cells for days before the first day of the month
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'h-10';
+                calendarDays.appendChild(emptyCell);
+            }
+            
+            // Add cells for each day of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dateKey = formatDateKey(date);
+                
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day h-10 rounded-md flex items-center justify-center cursor-pointer relative';
+                
+                // Highlight today
+                const today = new Date();
+                if (date.getDate() === today.getDate() && 
+                    date.getMonth() === today.getMonth() && 
+                    date.getFullYear() === today.getFullYear()) {
+                    dayCell.classList.add('ring-2', 'ring-primary-light', 'dark:ring-primary-dark');
+                }
+                
+                dayCell.textContent = day;
+                
+                // Check if this date has workout data
+                if (workoutCalendar[dateKey]) {
+                    const progress = workoutCalendar[dateKey];
+                    
+                    // Add indicator based on completion
+                    const indicator = document.createElement('div');
+                    indicator.className = 'absolute bottom-1 w-2 h-2 rounded-full';
+                    
+                    if (progress === 100) {
+                        indicator.classList.add('bg-green-500');
+                    } else if (progress > 0) {
+                        indicator.classList.add('bg-yellow-500');
+                    }
+                    
+                    dayCell.appendChild(indicator);
+                    
+                    // Add tooltip on hover
+                    dayCell.addEventListener('mouseenter', () => {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'absolute z-10 w-32 p-2 text-xs bg-white dark:bg-gray-800 rounded shadow-lg bottom-full mb-2';
+                        tooltip.textContent = `${progress}% completado`;
+                        dayCell.appendChild(tooltip);
+                        
+                        // Remove tooltip when mouse leaves
+                        dayCell.addEventListener('mouseleave', () => {
+                            tooltip.remove();
+                        });
+                    });
+                }
+                
+                calendarDays.appendChild(dayCell);
+            }
+        }
+        
+        function updateWorkoutCalendar(day) {
+            const dayElement = document.querySelector(`.workout-day[data-day="${day}"]`);
+            if (!dayElement) return;
+            
+            const totalExercises = dayElement.querySelectorAll('[data-exercise]').length;
+            const completedExercises = dayElement.querySelectorAll('[data-exercise].completed').length;
+            const progress = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
+            
+            // Get today's date
+            const today = new Date();
+            const dateKey = formatDateKey(today);
+            
+            // Update workout calendar
+            let workoutCalendar = JSON.parse(localStorage.getItem('workoutCalendar')) || {};
+            workoutCalendar[dateKey] = progress;
+            localStorage.setItem('workoutCalendar', JSON.stringify(workoutCalendar));
+        }
+        
+        function formatDateKey(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
     </script>
 </body>
